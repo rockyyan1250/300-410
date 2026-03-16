@@ -19,19 +19,15 @@ Troubleshoot R-WEST to achieve the desired results:
 まず General LAB を起動し、R1 に以下を投入してください。これで本番と同じ「前提条件（existing settings）」を再現できます。
 
 ```
-! ===== R1（R-WESTとして使用）の Pre-setting =====
 enable
 configure terminal
 hostname R-WEST
-
-! Syslogサーバへのlogging設定（IPはL1のIPに合わせる）
+!
 logging host 192.168.0.101 sequence-num-session
-
-! SNMP基本設定
+!
 snmp-server community public RO
 snmp-server host 192.168.0.101 public
-
-! OSPFも動いている前提（trapsを送るため）
+!
 router ospf 1
  network 0.0.0.0 255.255.255.255 area 0
  exit

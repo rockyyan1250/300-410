@@ -90,9 +90,9 @@ interface tunnel 0
  ip ospf priority 255
  tunnel source 192.168.1.2
  tunnel mode gre multipoint
-interface ethernet0/0
+interface g0/0
  ip address 192.168.1.2 255.255.255.252
-interface ethernet0/1
+interface g0/1
  ip address 10.100.0.1 255.255.255.0
 router ospf 1
  network 10.0.0.0 0.255.255.255 area 0
@@ -119,9 +119,9 @@ interface tunnel 0
  ip ospf priority 0
  tunnel source 192.168.1.6
  tunnel destination 192.168.1.2
-interface ethernet0/0
+interface g0/0
  ip address 192.168.1.6 255.255.255.252
-interface ethernet0/1
+interface g0/1
  ip address 10.100.1.1 255.255.255.0
 router ospf 1
  network 10.0.0.0 0.255.255.255 area 0
@@ -148,9 +148,9 @@ interface tunnel 0
  ip ospf priority 0
  tunnel source 192.168.1.10
  tunnel destination 192.168.1.2
-interface ethernet0/0
+interface g0/0
  ip address 192.168.1.10 255.255.255.252
-interface ethernet0/1
+interface g0/1
  ip address 10.100.2.1 255.255.255.0
 router ospf 1
  network 10.0.0.0 0.255.255.255 area 0

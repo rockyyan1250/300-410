@@ -140,12 +140,63 @@ East# ping 172.16.16.16
 
 の2点です。
 
-uRPF と ACL のどちらの方が、まだ動きがイメージしにくいですか？
-<span style="display:none">[^2]</span>
+SW2
+enable secret Cisco
+!
+username SW2 secret Cisco
+aaa new-model
+!
+aaa authentication login telnet local
+!
+ip access-list standard ISP
+deny any log
+!
+line con 0
+exec-timeout 0 0
+privilege level 15
+logging synchronous
+line aux 0
+line vty 0 4
+access-class ISP in
+exec-timeout 0 0
+transport input ssh
 
-<div align="center">⁂</div>
 
-[^1]: 300-410-685-25.pdf
 
-[^2]: image.jpg
 
+
+ISP
+interface Loopback0
+ip address 172.16.0.100 255.255.255.255
+ip ospf 1 area 0
+!
+interface Loopback16
+ip address 172.16.16.16 255.255.255.255
+!
+interface Ethernet0/0
+ip address 10.0.10.1 255.255.255.252
+ip ospf 1 area 1
+!
+interface Ethernet0/1
+ip address 10.0.20.1 255.255.255.252
+ip ospf 1 area 0
+
+
+
+
+East
+interface Ethernet0/0
+ip address 192.168.10.1 255.255.255.0
+!
+interface Ethernet0/1
+ip address 10.0.10.2 255.255.255.252
+ip verify unicast source reachable-via rx
+!
+line con 0
+exec-timeout 0 0
+privilege level 15
+logging synchronous
+line aux 0
+line vty 0 4
+login
+transport input ssh

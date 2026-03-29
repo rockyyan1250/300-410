@@ -222,3 +222,111 @@ R2# traceroute 209.165.202.158 source 172.16.12.2 numeric
 
 [^1]: 300-410-685-25.pdf
 
+
+
+enable
+configure terminal
+hostname R3
+interface Loopback0
+ip address 10.3.3.3 255.255.255.0
+!
+interface Loopback1
+ip address 10.3.33.3 255.255.255.0
+!
+interface g0/0
+ip address 172.16.13.3 255.255.255.248
+ip nat inside
+!
+interface g0/1
+ip address 10.0.35.3 255.255.255.248
+ip nat inside
+!
+interface g0/2
+ip address 209.165.200.238 255.255.255.252
+ip nat outside
+!
+interface g0/3
+ip address 209.165.200.230 255.255.255.252
+ip nat outside
+!
+router eigrp 10
+default-metric 1 1 1 1 1
+network 10.0.35.0 0.0.0.7
+network 10.3.33.0 0.0.0.255
+redistribute ospf 10
+redistribute static
+eigrp router-id 10.3.33.3
+!
+router ospf 10
+router-id 10.3.3.3
+redistribute static subnets
+redistribute eigrp 10 subnets
+network 10.3.3.0 0.0.0.255 area 0
+network 172.16.13.0 0.0.0.7 area 0
+default-information originate metric 100 metric-type 1
+!
+ip nat inside source list 10 interface Ethernet1/0 overload
+ip nat inside source list 20 interface Ethernet1/1 overload
+ip route 0.0.0.0 0.0.0.0 Null0
+!
+route-map INTERNET2 permit 10
+match ip address 120
+!
+route-map INTERNET1 permit 10
+match ip address 110
+!
+access-list 10 permit 10.0.0.0 0.255.255.255
+access-list 20 permit 172.16.0.0 0.15.255.255
+access-list 110 deny ip 10.0.0.0 0.255.255.255 172.16.0.0 0.15.255.255
+access-list 110 deny ip 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255
+access-list 110 permit ip host 10.0.56.6 any
+access-list 120 deny ip 172.16.0.0 0.15.255.255 10.0.0.0 0.255.255.255
+access-list 120 permit ip host 172.16.12.1 0.15.255.255 any
+
+
+
+
+enable
+configure terminal
+hostname R4
+interface Loopback0
+ip address 10.4.4.4 255.255.255.0
+!
+interface Loopback1
+ip address 10.4.44.4 255.255.255.0
+!
+interface g0/0
+ip address 172.16.24.4 255.255.255.248
+!
+interface g0/1
+ip address 10.0.46.4 255.255.255.240
+!
+interface g0/2
+ip address 10.0.49.4 255.255.255.0
+!
+router eigrp 10
+default-metric 1 1 1 1 1
+network 10.0.46.0 0.0.0.15
+network 10.4.46.0 0.0.0.255
+redistribute rip
+redistribute ospf 10 route-map default
+distance 255 0.0.0.0 255.255.255.255 5
+eigrp router-id 10.4.44.4
+!
+router ospf 10
+router-id 10.4.4.4
+redistribute eigrp 10 subnets
+network 10.4.4.0 0.0.0.255 area 0
+network 172.16.24.0 0.0.0.27 area 0
+!
+router rip
+version 2
+redistribute eigrp 10 metric 6
+network 10.0.0.0
+!
+route-map default deny 10
+match ip address 7
+!
+route-map default permit 20
+!
+access-list 7 permit 0.0.0.0

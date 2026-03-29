@@ -73,7 +73,7 @@ router eigrp 10
   network 10.0.0.28 0.0.0.3
   network 192.168.20.0 0.0.0.3
  exit-address-family
-interface ethernet0/0
+interface g0/0
  no ip access-group BLOCK1 in
  no ip access-group BLOCK1 out
 end
@@ -155,3 +155,143 @@ copy run start
 
 [^2]: image.jpg
 
+
+enable
+configure terminal
+hostname R1
+interface Loopback0
+ip address 10.10.10.1 255.255.255.255
+!
+interface g0/0
+ip address 10.0.0.1 255.255.255.252
+!
+router eigrp 600
+network 10.0.0.0 0.0.0.3
+network 10.10.10.1 0.0.0.0
+
+
+
+enable
+configure terminal
+hostname R2
+ip vrf Admin
+!
+ip vrf Sales
+!
+interface Loopback0
+ip address 10.10.10.2 255.255.255.255
+!
+interface g0/0
+ip vrf forwarding Sales
+ip address 10.0.0.2 255.255.255.252
+!
+interface g0/1
+ip vrf forwarding Sales
+ip address 10.0.0.5 255.255.255.252
+!
+interface g0/2
+ip vrf forwarding Admin
+ip address 10.0.0.25 255.255.255.252
+!
+interface g0/3
+ip vrf forwarding Admin
+ip address 192.168.20.2 255.255.255.252
+!
+router eigrp 10
+!
+ip prefix-list Block seq 5 deny 10.0.0.8/30
+ip prefix-list Block seq 10 permit 0.0.0.0/0
+
+
+
+
+enable
+configure terminal
+hostname R3
+ip vrf Admin
+!
+ip vrf Sales
+!
+interface Loopback0
+ip address 10.10.10.3 255.255.255.255
+!
+interface g0/0
+ip vrf forwarding Sales
+ip address 10.0.0.9 255.255.255.252
+ip access-group BLOCK1 in
+ip access-group BLOCK1 out
+!
+interface g0/1
+ip vrf forwarding Sales
+ip address 10.0.0.6 255.255.255.252
+!
+interface g0/2
+ip vrf forwarding Admin
+ip address 10.0.0.30 255.255.255.252
+!
+interface g0/3
+ip vrf forwarding Admin
+ip address 192.168.20.1 255.255.255.252
+!
+router eigrp 10
+auto-summary
+!
+ip access-list extended BLOCK1
+deny eigrp any any
+permit ip any any
+
+
+
+
+
+enable
+configure terminal
+hostname R4
+interface Loopback0
+ip address 10.10.10.4 255.255.255.255
+!
+interface g0/0
+ip address 10.0.0.10 255.255.255.252
+!
+router eigrp 500
+network 10.0.0.8 0.0.0.3
+network 10.10.10.4 0.0.0.0
+auto-summary
+
+
+
+
+
+
+enable
+configure terminal
+hostname R5
+interface Loopback0
+ip address 10.10.10.5 255.255.255.255
+!
+interface g0/2
+ip address 10.0.0.26 255.255.255.252
+!
+router eigrp 600
+network 10.0.0.24 0.0.0.3
+network 10.10.10.5 0.0.0.0
+auto-summary
+
+
+
+
+
+
+
+enable
+configure terminal
+hostname R6
+interface Loopback0
+ip address 10.10.10.6 255.255.255.255
+!
+interface g0/2
+ip address 10.0.0.29 255.255.255.252
+!
+router eigrp 600
+network 10.0.0.28 0.0.0.3
+auto-summary

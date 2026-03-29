@@ -119,12 +119,119 @@ copy run start
     - 各装置で SNMP サーバ IPv6 が 2001:ABCD:ABCD:5678:... で v2c/RO になっていること。
 - OSPFv3 の隣接を flap させて、SNMP サーバ側で trap 受信と Syslog メッセージを確認。
 
-SNMP と Syslog の連携で、いま一番混乱しやすいのは「どこで enable traps syslog が必要か」それとも「logging trap informational の役割」どちらですか？
-<span style="display:none">[^2]</span>
+enable
+configure terminal
+hostname R1
+service timestamps debug datetime msec
+service timestamps log uptime
+!
+interface g0/0
+ip address 10.12.0.1 255.255.255.252
+ipv6 address 2001:BB9:AABB:1234:1111:2222:3333:4444/64
+ipv6 enable
+ipv6 ospf 1 area 0
+!
+interface g0/1
+ip address 10.11.0.1 255.255.255.252
+ipv6 address 2001:BB9:AABB:1212:1111:2222:3333:1111/64
+ipv6 address autoconfig
+ipv6 enable
+ipv6 ospf 1 area 0
+!
+ipv6 router ospf 1
+!
+snmp-server host 2001:ABCD:ABCD:5678:A8BB:CCFF:FE00:200 version 2c RO
 
-<div align="center">⁂</div>
 
-[^1]: 300-410-685-25.pdf
 
-[^2]: image.jpg
 
+
+
+
+
+
+enable
+configure terminal
+hostname R2
+service timestamps debug datetime msec
+no service timestamps log uptime
+!
+interface g0/0
+ip address 10.12.0.2 255.255.255.252
+ipv6 address 2001:BB9:AABB:1234:1111:2222:3333:5555/64
+ipv6 enable
+ipv6 ospf 1 area 0
+!
+interface g0/1
+ip address 10.22.0.2 255.255.255.252
+ipv6 address 2001:BB2:AABB:2202:1111:2222:3333:2021/64
+ipv6 address autoconfig
+ipv6 enable
+ipv6 ospf 1 area 0
+!
+logging host ipv6 FE80::250:79FF:FE66:682E
+ipv6 router ospf 1
+!
+snmp-server host 2001:ABCD:ABCD:1234:A8BB:CCFF:FE00:200 RO
+
+
+
+
+
+
+enable
+configure terminal
+hostname SW1
+service timestamps debug datetime msec
+service timestamps log datetime msec
+!
+interface g0/0
+no switchport
+ip address 10.101.0.1 255.255.255.252
+ipv6 address 2001:ABCD:ABCD:1234::/64 eui-64
+ipv6 address autoconfig
+ipv6 enable
+ipv6 ospf 1 area 0
+!
+interface g0/0
+no switchport
+ip address 10.11.0.2 255.255.255.252
+ipv6 address 2001:BB9:AABB:1212:1111:2222:3333:1112/64
+ipv6 enable
+ipv6 ospf 1 area 0
+
+
+
+
+
+
+
+
+
+enable
+configure terminal
+hostname SW2
+service timestamps debug datetime msec
+service timestamps log datetime msec
+!
+interface g0/0
+no switchport
+ip address 10.201.0.1 255.255.255.252
+ipv6 address 2001:ABCD:ABCD:5678::/64 eui-64
+ipv6 enable
+ipv6 ospf 1 area 0
+!
+interface g0/1
+no switchport
+ip address 10.22.0.1 255.255.255.252
+ipv6 address 2001:BB2:AABB:2202:1111:2222:3333:2022/64
+ipv6 enable
+ipv6 ospf 1 area 0
+!
+logging trap debugging
+logging host ipv6 FE80::250:79FF:FE66:682E
+ipv6 router ospf 1
+!
+snmp-server enable traps ospf state-change neighbor-state-change
+snmp-server host 2001:ABCD:ABCD:1234:A8BB:CCFF:FE00:200 RO
+snmp-server host 2001:ABCD:ABCD:5678:A8BB:CCFF:FE00:200 version 2c RO

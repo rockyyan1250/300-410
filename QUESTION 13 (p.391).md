@@ -87,9 +87,9 @@ route-map SP1 permit 10
 set ip next-hop 209.165.201.2
 route-map SP2 permit 10
 set ip next-hop 209.165.200.226
-interface ethernet0/0
+interface g0/0
 ip policy route-map SP1
-interface ethernet0/1
+interface g0/1
 ip policy route-map SP2
 end
 copy run start
@@ -213,16 +213,97 @@ show ip policy
 
 ***
 
-この問題で特にややこしいのは「Task2 の metric を internal だけに適用する理由」と「Task1/2/3 が互いに干渉しないように設計されている点」です。
+per-setting 
 
-どのタスクのロジックが一番覚えづらそうに感じますか？
-<span style="display:none">[^3]</span>
+R3
 
-<div align="center">⁂</div>
+interface Loopback0
+ip address 10.3.3.3 255.255.255.0
+!
+interface Loopback1
+ip address 10.3.33.3 255.255.255.0
+!
+interface g0/0
+ip address 172.16.13.3 255.255.255.248
+ip nat inside
+!
+interface g0/1
+ip address 10.0.35.3 255.255.255.248
+ip nat inside
+!
+interface g0/2
+ip address 209.165.201.1 255.255.255.252
+ip nat outside
+!
+interface g0/3
+ip address 209.165.200.225 255.255.255.252
+ip nat outside
+!
+router eigrp 10
+default-metric 1 1 1 1 1
+network 10.0.35.0 0.0.0.7
+network 10.3.33.0 0.0.0.255
+redistribute ospf 10
+redistribute static
+eigrp router-id 10.3.33.3
+!
+router ospf 10
+router-id 10.3.3.3
+redistribute static subnets
+redistribute eigrp 10 subnets
+network 10.3.3.0 0.0.0.255 area 0
+network 172.16.13.0 0.0.0.7 area 0
+default-information originate metric 100 metric-type 1
+!
+ip route 0.0.0.0 0.0.0.0 Null0
+!
+route-map SP2 permit 10
+match ip address 110
+!
+route-map SP1 permit 10
+match ip address 120
+!
+access-list 10 permit 10.0.0.0 0.255.255.255
+access-list 20 permit 172.16.0.0 0.15.255.255
+access-list 110 deny ip 10.0.0.0 0.255.255.255 172.16.0.0 0.15.255.255
+access-list 110 permit ip 10.0.0.0 0.255.255.255 any
+access-list 120 deny ip 172.16.0.0 0.15.255.255 10.0.0.0 0.255.255.255
+access-list 120 permit ip 172.16.0.0 0.15.255.255 any
 
-[^1]: 300-410-685-25.pdf
 
-[^2]: image.jpg
 
-[^3]: image.jpg
+R4
 
+interface Loopback0
+ip address 10.4.4.4 255.255.255.0
+!
+interface Loopback1
+ip address 10.4.44.4 255.255.255.0
+!
+interface g0/0
+ip address 172.16.24.4 255.255.255.248
+!
+interface g0/1
+ip address 10.0.46.4 255.255.255.240
+!
+interface g0/2
+ip address 10.0.49.4 255.255.255.0
+!
+router eigrp 10
+default-metric 1 1 1 1 1
+network 10.0.46.0 0.0.0.15
+network 10.4.46.0 0.0.0.255
+redistribute ospf 10
+redistribute rip
+eigrp router-id 10.4.44.4
+!
+router ospf 10
+router-id 10.4.4.4
+redistribute eigrp 10 subnets
+network 10.4.4.0 0.0.0.255 area 0
+network 172.16.24.0 0.0.0.27 area 0
+!
+router rip
+version 2
+redistribute eigrp 10 metric 6
+network 10.0.0.0

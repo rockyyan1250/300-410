@@ -182,19 +182,53 @@ show access-lists icmp-rule
 
 ***
 
-この問題は、
+EAST
+interface Etherent0/0
+ip address 192.168.10.1 255.255.255.0
+!
+interface Etherent0/1
+ip address 10.0.10.2 255.255.255.252
+ip access-group icmp-rule in
+!
+ip route 0.0.0.0 0.0.0.0 10.0.10.1
+!
+ip access-list extended icmp-rule
+deny icmp any any time-range blkicmp
+!
+line con 0
+exec-timeout 0 0
+logging synchronous
+line vty 0 4
+exec-timeout 5 0
+password 7 xxxxxxxxxxxxxx
+login local
+transport input all
+!
+time-range blkicmp
+periodic daily 18:01 to 23:59
 
-- West：AAAリストから `none` を外して VTY に適用
-- East：time-range を「禁止時間帯」にして ACL に1つだけ permit を足す
 
-という2点だけを確実に覚えておくと、本番でも素早く対応できます。
 
-ここまで見て、AAA 関連と ACL+time-range のどちらの方がまだ不安に感じますか？
-<span style="display:none">[^2]</span>
 
-<div align="center">⁂</div>
-
-[^1]: 300-410-685-25.pdf
-
-[^2]: image.jpg
-
+WEST
+ip domain name cisco.com
+!
+aaa new-model
+aaa authentication login default local-case none
+aaa authentication login SSH_Connections local none
+!
+interface Etherent0/0
+ip address 192.168.20.1 255.255.255.0
+!
+interface Etherent0/1
+ip address 20.0.20.2 255.255.255.252
+!
+ip route 0.0.0.0 0.0.0.0 20.0.20.1
+!
+line con 0
+exec-timeout 0 0
+logging synchronous
+stopbits 1
+line vty 0 4
+exec-timeout 5 0
+transport input all

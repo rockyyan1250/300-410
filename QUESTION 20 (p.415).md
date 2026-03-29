@@ -147,14 +147,72 @@ SW2# ping 192.168.10.1
 
 ***
 
-この問題で一番ポイントになるのは、「サーバ側の戻りトラフィックを許可する ACL の書き方（宛先ポートを指定しない）」と、「ソース限定のプレフィックスマッチだけで WAN フィルタを作る」という2点です。
+ISP
+interface Ethernet0/0
+ip address 10.0.10.1 255.255.255.252
+ip access-group ACL in
+!
+interface Ethernet0/0
+ip address 20.0.20.1 255.255.255.252
+ip access-group ACL in
+!
+ip route 192.168.10.0 255.255.255.0 10.0.10.2
+ip route 192.168.20.0 255.255.255.0 20.0.20.2
+!
+ip access-list extended ACL
+permit tcp host 192.168.20.2 eq telnet host 20.0.20.1 eq telnet
+permit ip 192.168.0.0 0.0.255.255 255.255.255.0 0.0.0.255
+deny ip any any log
 
-今の説明の中で、ACL の書き方でまだ曖昧な部分はどこでしょうか？
-<span style="display:none">[^2]</span>
 
-<div align="center">⁂</div>
 
-[^1]: 300-410-685-25.pdf
 
-[^2]: image.jpg
 
+
+East
+interface Ethernet0/0
+ip address 192.168.10.1 255.255.255.0
+!
+interface Ethernet0/1
+ip address 10.0.10.2 255.255.255.0
+!
+ip route 0.0.0.0 0.0.0.0 10.0.10.1
+
+
+
+
+
+
+
+
+
+West
+interface Ethernet0/0
+ip address 192.168.20.1 255.255.255.0
+!
+interface Ethernet0/1
+ip address 20.0.20.2 255.255.255.0
+!
+ip route 0.0.0.0 0.0.0.0 20.0.20.1
+
+
+
+
+
+
+SW2
+enable secret Cisco (password Cisco is encrypted)
+username SW2 secret Cisco (password Cisco is encrypted)
+!
+aaa new-model
+!
+aaa authentication login TELNET local
+!
+interface Ethernet0/0
+ip address 192.168.20.2 255.255.255.0
+!
+ip route 0.0.0.0 0.0.0.0 192.168.20.1
+!
+line vty 0 4
+exec-timeout 0 0
+transport input ssh
